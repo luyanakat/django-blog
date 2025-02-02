@@ -11,3 +11,8 @@ class PostSerializer(serializers.ModelSerializer):
         if len(value) < 10:
             raise serializers.ValidationError('Title must be at least 10 characters long')
         return value
+    
+    def validate_content(self, value):
+        if len(value) < 50:
+            raise serializers.ValidationError('Content must be at least 50 characters long')
+        return value

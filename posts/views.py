@@ -1,40 +1,35 @@
-from rest_framework import generics, status
-from rest_framework.views import APIView
-
-from posts.models import Posts
-from posts.serializers import PostSerializer
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-# Create your views here.
-class PostAPIView(APIView):
-    from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+
+from utils.response import custom_response
+
 from .models import Posts
 from .serializers import PostSerializer
 
-class PostAPIView(APIView):
-    def get(self, request, *args, **kwargs):
-        post_id = kwargs.get('id') 
-        
-        if post_id:  
-            try:
-                post = Posts.objects.get(id=post_id)
-                serializer = PostSerializer(post)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except Posts.DoesNotExist:
-                return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-        else: 
-            posts = Posts.objects.all()
-            serializer = PostSerializer(posts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_list(request):
+    """Lấy danh sách tất cả bài viết"""
+    posts = Posts.objects.all()
+    serializer = PostSerializer(posts, many=True)
+    return custom_response(data=serializer.data)
 
 
-    def post(self, request, *args, **kwargs):
-        # Tạo bài viết mới
-        serializer = PostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+@api_view(['GET'])
+def get_by_id(request, id):
+    """Lấy một bài viết theo ID"""
+    post = get_object_or_404(Posts, id=id)
+    serializer = PostSerializer(post)
+    return custom_response(data=serializer.data)
+
+
+@api_view(['POST'])
+def create_post(request):
+    """Tạo một bài viết mới"""
+    serializer = PostSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return custom_response(data=serializer.data)
+    return custom_response(data=serializer.errors, code=status.HTTP_400_BAD_REQUEST)
